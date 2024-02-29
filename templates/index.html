@@ -1,0 +1,55 @@
+{% extends "base_tables.html" %}
+
+{% block content_title %}
+    {% if dataset %}
+    <div style="margin-left: 10px">
+    <a style="text-decoration: none" href="{{ url_for('index') }}"><img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
+    <b style="font-family: 'Ebrima'; font-size: 32px; color: #db7533">{% if dataset %}{{ dataset.filename }}{% else %}SQL DATABASE BROWSER{% endif %}</b></a>
+    {% else %}
+    <div style="text-align: center">
+    <img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
+    <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">{% if dataset %}{{ dataset.filename }}{% else %}SQL DATABASE BROWSER{% endif %}</b>
+        <hr style="width: 400px">
+</div>
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if dataset %}
+    <br>
+    <h3 style="color: #db7533">Информация о базе данных</h3>
+  <table style="margin-top: 15px" class="table table-striped">
+    <tbody>
+      <tr>
+        <th>Директория</th>
+        <td>{{ dataset.location }}</td>
+      </tr>
+      <tr>
+        <th>Размер</th>
+        <td>{{ dataset.size }}</td>
+      </tr>
+      <tr>
+{#        <th>Создано</th>#}
+{#        <td>{{ dataset.created.strftime('%A %B %d, %Y at %I:%M:%p') }}</td>#}
+      </tr>
+      <tr>
+{#        <th>Обновлено</th>#}
+{#        <td>{{ dataset.modified.strftime('%A %B %d, %Y at %I:%M:%p') }}</td>#}
+      </tr>
+      <tr>
+        <th>Количество таблиц</th>
+        <td>{{ dataset.tables|length }}</td>
+      </tr>
+    </tbody>
+  </table>
+{% else %}
+<form class="form" role="form" action="{{ url_for('index') }}" enctype="multipart/form-data" method="post">
+  <div class="form-group">
+    <label for="inputfile">Загрузите базу данных</label>
+    <input type="file" id="inputfile" name="sqlite-file">
+    <p class="help-block">Доступны только SQL базы данных.</p>
+  </div>
+  <button type="submit" class="btn">Открыть</button>
+</form>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base_table.html" %}
+
+{% block extra_scripts %}
+   <script src="/static/js/content.js"></script>
+    <script>
+function hideContent(element) {
+  element.textContent = ''; // Устанавливаем текст содержимого ячейки пустым
+}
+</script>
+{% endblock %}
+
+{% block content_tab_class %}active{% endblock %}
+
+{% block inner_content %}
+    <div id="your_table" data-table="{{ table }}">
+</div>
+    <p style="margin-top: 10px" class="pull-right"><a style="background: #db7533; border: 1px solid #db7533" id="add-row-button" class="btn btn-primary btn-sm" href="{{ url_for('add_row',table=table) }}">Добавить строку</a></p>
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        {% for info in infos %}
+          <th style="border-bottom: 1px solid darkgrey">
+            <input style="box-shadow: none; outline: none; border: 1px solid lightgrey; font-weight: normal" type="text" class="form-control column-filter" data-column="{{ loop.index0 }}" placeholder="Фильтр..."><br>
+            <a style="color: black;" href="./?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for column in columns %}
+        <tr>
+            {% for cell in column %}
+            <td style="border: 1px solid darkgrey" onclick="hideContent(this)" contenteditable>{% if cell == None %}<i style="color: darkgrey">Null</i>{% else %}{{ cell }}{% endif %}</td>
+            {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+  <nav>
+    <ul class="pager">
+      <li class="{% if not previous_page %}disabled {% endif %}previous">
+        {% if not previous_page %}
+        <a href=" ">&larr; Предыдущая</a>
+        {% else %}
+        <a href="{{ url_for('table_content', table=table, page=previous_page, ordering=ordering) }}">&larr; Предыдущая</a>
+        {% endif %}
+      </li>
+      <li>Страница {{ page }} / {% if total_pages == 0 %}1{% else %}{{ total_pages }}{% endif %}</li>
+      <li class="{% if not next_page %}disabled {% endif %}next">
+        {% if not next_page %}
+        <a href=" ">Следующая &rarr;</a>
+        {% else %}
+        <a href="{{ url_for('table_content', table=table, page=next_page, ordering=ordering) }}">Следующая &rarr;</a>
+        {% endif %}
+      </li>
+    </ul>
+  </nav>
+
+
+
+{% endblock %}

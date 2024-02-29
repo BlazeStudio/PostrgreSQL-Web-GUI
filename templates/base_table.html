@@ -1,0 +1,27 @@
+{% extends "base_tables.html" %}
+
+{% block content_title %}<div style="font-family: 'Ebrima'; color: #db7533; margin-left: 10px">
+<img src="/static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
+  <a style="text-decoration: none; font-size: 32px; font-family: 'Ebrima'; color: #db7533" href="{{ url_for('index') }}"><b>{{ dataset.filename }}</b></a><span style="font-size: 30px"> - {{ table }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="{% block structure_tab_class %}{% endblock %}">
+      <a style="color: #db7533" href="{{ url_for('table_info', table=table) }}">Структура</a>
+    </li>
+    <li role="presentation" class="{% block content_tab_class %}{% endblock %}">
+      <a style="color: #db7533" href="{{ url_for('table_content', table=table) }}">Контент</a>
+    </li>
+    <li role="presentation" class="{% block query_tab_class %}{% endblock %}">
+      <a style="color: #db7533" href="{{ url_for('table_query', table=table) }}">Запрос</a>
+    </li>
+    <li role="presentation" class="pull-right{% block drop_tab_class %}{% endblock %}">
+      <a style="color: red" href="{{ url_for('delete_table', table=table) }}">Удалить</a>
+    </li>
+    {% block inner_nav %}{% endblock %}
+  </ul>
+  {% block inner_content %}
+  {% endblock %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block sidebar %}
+  {% if dataset %}
+  <input style="box-shadow: none; outline: none; border: 1px solid lightgrey" class="form-control" id="table-search" placeholder="Поиск" type="text" />
+      <h5 style="color: darkgrey; text-align: center; margin-top: 15px">Таблицы</h5><hr style="margin-top: 10px; margin-bottom: 15px">
+  <ul class="nav nav-pills nav-stacked" role="tablist">
+    {% for table_name in dataset.tables|sort %}
+      {% if table_name not in virtual_tables_corollary %}
+          {% if table and table_name == table %}
+      <li class="table-link">
+        <a style="color: #fff0f0; background: #db7533" href="{{ url_for('table_info',table=table_name) }}">
+          {% else %}
+          <li class="table-link">
+        <a style="color: #db7533" href="{{ url_for('table_info',table=table_name) }}">
+          {% endif %}
+      {{ table_name }}
+        </a>
+      </li>
+      {% endif %}
+    {% endfor %}
+      <li class="table-link"><a href="{{ url_for('close') }}" style="color: red;"><b>Закрыть</b></a></li>
+  </ul>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base_table.html" %}
+
+{#{% block extra_scripts %}#}
+{#  <script type="text/javascript" src="/static/js/structure.js"></script>#}
+{#{% endblock %}#}
+
+{% block structure_tab_class %}active{% endblock %}
+
+{% block inner_content %}
+  <h3 style="color: #db7533" id="sql">SQL</h3>
+  {{ table_sql|format_create_table|highlight }}
+{#  {{ table_sql|format_create_table|highlight }}#}
+
+  <h3 id="columns">
+    <p class="pull-right"><a style="background: #db7533; border: 1px solid #db7533" class="btn btn-primary btn-sm" href="{{ url_for('add_column',table=table) }}">Добавить столбец</a></p>
+      <span style="color: #db7533">Столбцы таблицы</span>
+  </h3>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Столбец</th>
+        <th>Тип</th>
+        <th>NULL</th>
+        <th>PRIMARY KEY</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for info in infos %}
+        <tr>
+          <td><code>{{ info[0] }}</code></td>
+          <td><code>{{ info[1] }}</code></td>
+          <td>
+            {% if not info[3] %}
+              <span class="glyphicon glyphicon-ok"></span>
+            {% endif %}
+          </td>
+          <td>
+            {% if info[5] %}
+              <span class="glyphicon glyphicon-ok"></span>
+            {% endif %}
+          </td>
+          <td>
+            <a style="color: #db7533" href="{{ url_for('rename_column',table=table,rename=info[1]) }}">Переименовать</a>
+            <span class="separator">|</span>
+            <a style="color: #db7533" href="{{ url_for('delete_column',table=table,name=info[1]) }}">Удалить</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <hr />
+
+  {% if foreign_keys %}
+    <h3 id="foreign-keys">Foreign Keys</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Destination</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for foreign_key in foreign_keys %}
+          <tr>
+            <td><code>{{ foreign_key[3] }}</code></td>
+            <td><code>{{ foreign_key[2] }}.{{ foreign_key[4] }}</code></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <hr />
+  {% endif %}
+
+
+
+{% endblock %}
