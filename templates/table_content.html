@@ -1,12 +1,14 @@
 {% extends "base_table.html" %}
 
 {% block extra_scripts %}
+    {% if edit == 'edit' %}
    <script src="/static/js/content.js"></script>
     <script>
 function hideContent(element) {
   element.textContent = '';
 }
 </script>
+{% endif %}
 {% endblock %}
 
 {% block content_tab_class %}active{% endblock %}
@@ -14,16 +16,24 @@ function hideContent(element) {
 {% block inner_content %}
     <div id="your_table" data-table="{{ table }}">
 </div>
-    <p style="margin-top: 10px" class="pull-right"><a style="background: #db7533; border: 1px solid #db7533" id="add-row-button" class="btn btn-primary btn-sm" href="{{ url_for('add_row',table=table) }}">Добавить строку</a></p>
-<div class="table-responsive">
-  <table class="table table-striped">
+    <p style="margin-top: 10px; color: grey; font-size: 15px">{% if edit == 'edit' %}Редактирование таблицы{% else %}Просмотр таблицы{% endif %}<a style="background: #db7533; border: 1px solid #db7533; margin-left: 15px" id="add-row-button" class="btn btn-primary btn-sm"
+    {% if edit == 'edit' %}
+    href="{{ url_for('table_content',table=table, edit='view') }}">Просмотреть
+    {% else %}
+    href="{{ url_for('table_content',table=table, edit='edit') }}">Редактировать
+    {% endif %}
+    </a></p>
+    <p style="margin-top: 10px; margin-left: 10px" class="pull-right"><a style="background: #db7533; border: 1px solid #db7533" id="add-row-button" class="btn btn-primary btn-sm" href="{{ url_for('add_row',table=table, edit=edit) }}">Добавить строку</a></p>
+<div class="table-responsive" style="margin-right: 30px">
+<div class="table-container" style="max-height: 1200px; border: 1px solid lightgrey; border-radius: 5px; overflow-x: auto; overflow-y: auto;">
+  <table class="table table-striped" style="min-width: 50px;">
     <thead>
       <tr>
         {% for info in infos %}
           <th style="border-bottom: 1px solid darkgrey">
             <input style="box-shadow: none; outline: none; border: 1px solid lightgrey; font-weight: normal" type="text" class="form-control column-filter" data-column="{{ loop.index0 }}" placeholder="Фильтр..."><br>
-            <a style="color: black; " href="./?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a><br>
-          <span style="color: grey; font-weight: normal">({{ info[1] }})</span>
+{#                      <span style="color: grey; font-weight: normal">({{ info[1] }})</span>#}
+              <a style="color: black; " href="./content?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a><br>
           </th>
         {% endfor %}
       </tr>
@@ -32,7 +42,7 @@ function hideContent(element) {
   {% for column in columns %}
     <tr>
       {% for cell in column %}
-        <td style="border: 1px solid darkgrey" onclick="hideContent(this)" contenteditable>
+        <td style="border: 1px solid darkgrey" {% if edit == 'edit' %}onclick="hideContent(this)" contenteditable{% endif %}>
           {% if cell == None %}
             <i style="color: darkgrey">Null</i>
           {% else %}
@@ -41,7 +51,7 @@ function hideContent(element) {
         </td>
       {% endfor %}
       <td style="border: 1px solid darkgrey">
-        <form action="{{ url_for('delete_row', table=table) }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту строку?')">
+        <form action="{{ url_for('delete_row', table=table, edit=edit) }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту строку?')">
           <input type="hidden" name="row_id" value="{{ column }}">
           <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
         </form>
@@ -51,13 +61,14 @@ function hideContent(element) {
 </tbody>
   </table>
 </div>
+</div>
   <nav>
     <ul class="pager">
       <li class="{% if not previous_page %}disabled {% endif %}previous">
         {% if not previous_page %}
         <a href=" ">&larr; Предыдущая</a>
         {% else %}
-        <a href="{{ url_for('table_content', table=table, page=previous_page, ordering=ordering) }}">&larr; Предыдущая</a>
+        <a href="{{ url_for('table_content', table=table, edit=edit, page=previous_page, ordering=ordering) }}">&larr; Предыдущая</a>
         {% endif %}
       </li>
       <li>Страница {{ page }} / {% if total_pages == 0 %}1{% else %}{{ total_pages }}{% endif %}</li>
@@ -65,7 +76,7 @@ function hideContent(element) {
         {% if not next_page %}
         <a href=" ">Следующая &rarr;</a>
         {% else %}
-        <a href="{{ url_for('table_content', table=table, page=next_page, ordering=ordering) }}">Следующая &rarr;</a>
+        <a href="{{ url_for('table_content', table=table, edit=edit ,page=next_page, ordering=ordering) }}">Следующая &rarr;</a>
         {% endif %}
       </li>
     </ul>

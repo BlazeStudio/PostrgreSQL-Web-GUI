@@ -383,15 +383,15 @@ def add_column(table):
         return redirect(url_for('add_column', table=table))
     return render_template('add_column.html', column_mapping=column_mapping, table=table)
 
-@app.route('/<table>/add-row/', methods=['GET', 'POST'])
+@app.route('/<table>/<edit>/add-row/', methods=['GET', 'POST'])
 @require_database
-def add_row(table):
+def add_row(table, edit):
     values = dataset.get_table_info(table)
     values_2 = []
     for i in values:
         values_2.append(i[0])
     dataset.add_row(table, values)
-    return redirect(url_for('table_content', table=table))
+    return redirect(url_for('table_content', table=table, edit=edit))
 
 @app.route('/apply_changes', methods=['POST'])
 def apply_changes():
@@ -407,9 +407,9 @@ def apply_changes():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-@app.route('/<table>/delete-row/', methods=['POST'])
+@app.route('/<table>/<edit>/delete-row/', methods=['POST'])
 @require_database
-def delete_row(table):
+def delete_row(table, edit):
     row_id = eval(request.form.get('row_id'))
     try:
         columns_info = dataset.get_table_info(table)
@@ -418,9 +418,7 @@ def delete_row(table):
         for names in columns_info:
             new_mass.append(names[0])
         for i in range(len(new_mass)):
-            if row_id[i] == None:
-                pass
-            else:
+            if row_id[i] != None:
                 sql += f"{new_mass[i]} = '{row_id[i]}' AND "
         sql = sql[:-5]
         dataset.cursor.execute(sql)
@@ -428,15 +426,15 @@ def delete_row(table):
         flash('Строка успешно удалена.', 'success')
     except Exception as e:
         flash(f'Ошибка при удалении строки: {e}', 'danger')
-    return redirect(url_for('table_content', table=table))
+    return redirect(url_for('table_content', table=table, edit=edit))
 
 
-
-@app.route('/<table>/content/', methods=['GET', 'POST'])
+@app.route('/<table>/<edit>/content', methods=['GET', 'POST'])
 @require_database
-def table_content(table):
+def table_content(table, edit):
     columns_count = dataset.get_table(table)
     ordering = request.args.get('ordering')
+    print(ordering)
     rows_per_page = app.config['ROWS_PER_PAGE']
     page = request.args.get('page', 1, type=int)
     if ordering:
@@ -460,6 +458,7 @@ def table_content(table):
         columns_count=columns_count,
         infos=dataset.get_table_info(table),
         table=table,
+        edit=edit
     )
 
 
@@ -576,7 +575,7 @@ def _before_request():
     global dataset
     if database:
         # Параметры для подключения к PostgreSQL
-        dbname = 'postgres'
+        dbname = 'transport2'
         user = 'postgres'
         password = '12345'
         host = 'localhost'  # Или другой хост, на котором находится PostgreSQL
