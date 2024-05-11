@@ -230,13 +230,11 @@ class PostgresTools():
 
     def add_row(self, table, values):
         try:
-            # Получаем информацию о столбцах таблицы из information_schema.columns
             self.cursor.execute(
                 "SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = %s;",
                 (table,)
             )
             columns_info = self.cursor.fetchall()
-
             # Определяем, какие столбцы не могут содержать пустые значения
             non_nullable_columns = [column_info[0] for column_info in columns_info if column_info[1] == 'NO']
 
@@ -247,20 +245,20 @@ class PostgresTools():
                 if column_name in values:
                     row_values.append(values[column_name])
                 elif column_name in non_nullable_columns:
-                    # Если столбец не может быть пустым, заполняем его пустым символом
-                    row_values.append('')
+                    row_values.append(1)
                 else:
                     row_values.append(None)
 
-            # Создаем строку для имен столбцов
-            columns_str = ', '.join(column_info[0] for column_info in columns_info)
-            # Создаем строку для значений
-            values_str = ', '.join(["%s"] * len(columns_info))
+            query = f"INSERT INTO {table} values ("
+            query_time = f"'{row_values[0]}'"
+            query += query_time
+            if len(row_values) > 1:
+                for i in range(1, len(row_values)):
+                    query_time = f"'{i}'"
+                    query += ", " + query_time
+            query += ')'
+            print(query)
 
-            # Формируем SQL-запрос для вставки строки
-            query = f"INSERT INTO {table} values (12, 12, 12, 12)"
-
-            # Выполняем SQL-запрос
             self.cursor.execute(query, row_values)
             self.db.commit()
         except Exception as e:
@@ -383,7 +381,6 @@ def add_row(table):
     values_2 = []
     for i in values:
         values_2.append(i[0])
-    print(values_2)
     dataset.add_row(table, values)
     return redirect(url_for('table_content', table=table))
 
@@ -471,8 +468,13 @@ def table_create():
     if not table:
         flash('Введите имя таблицы.', 'danger')
         return redirect(request.referrer)
-    dataset.cursor.execute('CREATE TABLE %s(id INTEGER NOT NULL UNIQUE PRIMARY KEY )' % table)
-    return redirect(url_for('table_info', table=table))
+    try:
+        dataset.cursor.execute(f'CREATE TABLE {table}(id SERIAL PRIMARY KEY)')
+        dataset.db.commit()  # Фиксируем изменения
+        return redirect(url_for('table_info', table=table))
+    except Exception as e:
+        flash(f'Ошибка при создании таблицы: {str(e)}', 'danger')
+        return redirect(request.referrer)
 
 
 @app.route('/<table>/delete', methods=['GET', 'POST'])
@@ -481,8 +483,9 @@ def delete_table(table):
     if request.method == 'POST':
         try:
             dataset.cursor.execute('DROP TABLE %s' % table)
+            dataset.db.commit()  # Фиксируем изменения
         except Exception as exc:
-            flash('Ошибка импортирования файла: %s' % exc, 'danger')
+            flash('Ошибка при удалении таблицы: %s' % exc, 'danger')
         else:
             flash('Таблица "%s" была успешно удалена.' % table, 'success')
             return redirect(url_for('index'))
