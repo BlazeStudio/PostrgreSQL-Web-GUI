@@ -177,6 +177,7 @@ class PostgresTools():
             print(f"Ошибка при выполнении запроса paginate: {e}")
             return None
 
+
     def delete_table(self, table):
         self.cursor.execute("DROP TABLE %s" % table)
 
@@ -406,6 +407,31 @@ def apply_changes():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+@app.route('/<table>/delete-row/', methods=['POST'])
+@require_database
+def delete_row(table):
+    row_id = eval(request.form.get('row_id'))
+    try:
+        columns_info = dataset.get_table_info(table)
+        sql = f"DELETE FROM {table} WHERE "
+        new_mass = []
+        for names in columns_info:
+            new_mass.append(names[0])
+        for i in range(len(new_mass)):
+            if row_id[i] == None:
+                pass
+            else:
+                sql += f"{new_mass[i]} = '{row_id[i]}' AND "
+        sql = sql[:-5]
+        dataset.cursor.execute(sql)
+        dataset.db.commit()
+        flash('Строка успешно удалена.', 'success')
+    except Exception as e:
+        flash(f'Ошибка при удалении строки: {e}', 'danger')
+    return redirect(url_for('table_content', table=table))
+
+
+
 @app.route('/<table>/content/', methods=['GET', 'POST'])
 @require_database
 def table_content(table):
@@ -494,7 +520,7 @@ def delete_table(table):
     if request.method == 'POST':
         try:
             dataset.cursor.execute('DROP TABLE %s' % table)
-            dataset.db.commit()  # Фиксируем изменения
+            dataset.db.commit()
         except Exception as exc:
             flash('Ошибка при удалении таблицы: %s' % exc, 'danger')
         else:
@@ -550,7 +576,7 @@ def _before_request():
     global dataset
     if database:
         # Параметры для подключения к PostgreSQL
-        dbname = 'transport2'
+        dbname = 'postgres'
         user = 'postgres'
         password = '12345'
         host = 'localhost'  # Или другой хост, на котором находится PostgreSQL

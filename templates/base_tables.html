@@ -1,5 +1,8 @@
 {% extends "base.html" %}
-
+<form action="{{ url_for('delete_row', table=table) }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту строку?')">
+  <input type="hidden" name="row_id" value="{{ column[0] }}">
+  <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+</form>
 {% block sidebar %}
   {% if dataset %}
   <input style="box-shadow: none; outline: none; border: 1px solid lightgrey" class="form-control" id="table-search" placeholder="Поиск" type="text" />
