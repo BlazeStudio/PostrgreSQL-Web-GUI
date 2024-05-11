@@ -235,35 +235,37 @@ class PostgresTools():
     def add_row(self, table, values):
         try:
             self.cursor.execute(
-                "SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = %s;",
+                "SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = %s;",
                 (table,)
             )
             columns_info = self.cursor.fetchall()
-            # Определяем, какие столбцы не могут содержать пустые значения
-            non_nullable_columns = [column_info[0] for column_info in columns_info if column_info[1] == 'NO']
 
-            # Создаем список значений для вставки
-            row_values = []
-            for column_info in columns_info:
-                column_name = column_info[0]
+            column_names = [col_info[0] for col_info in columns_info]
+            non_nullable_columns = [col_info[0] for col_info in columns_info if col_info[1] == 'NO']
+
+            column_names_without_id = [col_name for col_name in column_names if col_name != 'id']
+
+            query = f"INSERT INTO {table} ("
+            query += ", ".join(column_names_without_id)
+            query += ") VALUES ("
+
+            placeholders = []
+            values_to_insert = []
+
+            for column_name in column_names_without_id:
                 if column_name in values:
-                    row_values.append(values[column_name])
+                    placeholders.append("%s")
+                    values_to_insert.append(values[column_name])
                 elif column_name in non_nullable_columns:
-                    row_values.append(1)
+                    placeholders.append("%s")
+                    values_to_insert.append(1)
                 else:
-                    row_values.append(None)
+                    placeholders.append("DEFAULT")
 
-            query = f"INSERT INTO {table} values ("
-            query_time = f"'{row_values[0]}'"
-            query += query_time
-            if len(row_values) > 1:
-                for i in range(1, len(row_values)):
-                    query_time = f"'{i}'"
-                    query += ", " + query_time
-            query += ')'
-            print(query)
+            query += ", ".join(placeholders)
+            query += ")"
 
-            self.cursor.execute(query, row_values)
+            self.cursor.execute(query, values_to_insert)
             self.db.commit()
         except Exception as e:
             print(f"Ошибка при добавлении строки: {e}")
@@ -369,16 +371,12 @@ def add_column(table):
         autoincrement = 'AUTOINCREMENT' if request.form.get('autoincrement') else ''
         atr = unique + not_null + autoincrement
         if name and column_type:
-            dataset.cursor.execute("SELECT COUNT(*) FROM %s" % table)
-            row = dataset.cursor.fetchone()
-            if len(row) != 0 and not_null == 'NOT NULL':
-                flash('В таблице содержатся строчки, невозможно добавить столбец с атрибутом NOT NULL', 'danger')
+            success = dataset.add_column(table, name, column_type, not_null, atr)
+            if success:
+                flash('Столбец "%s" был успешно создан' % name, 'success')
             else:
-                success = dataset.add_column(table, name, column_type, not_null, atr)
-                if success:
-                    flash('Столбец "%s" был успешно создан' % name, 'success')
-                else:
-                    flash('Столбец с таким именем уже существует', 'danger')
+                if not_null == 'NOT NULL': flash('В таблице содержатся строчки, невозможно добавить столбец с атрибутом NOT NULL', 'danger')
+                else: flash('Столбец с таким именем уже существует', 'danger')
         else:
             flash('Имя и тип не могут быть пустыми', 'danger')
         return redirect(url_for('add_column', table=table))
@@ -475,8 +473,6 @@ def table_query(table):
 
 
 
-
-
 @app.route('/table_create/', methods=['POST'])
 def table_create():
     table = request.form.get('table_name', '')
@@ -485,7 +481,7 @@ def table_create():
         return redirect(request.referrer)
     try:
         dataset.cursor.execute(f'CREATE TABLE {table}(id SERIAL PRIMARY KEY)')
-        dataset.db.commit()  # Фиксируем изменения
+        dataset.db.commit()
         return redirect(url_for('table_info', table=table))
     except Exception as e:
         flash(f'Ошибка при создании таблицы: {str(e)}', 'danger')
@@ -554,7 +550,7 @@ def _before_request():
     global dataset
     if database:
         # Параметры для подключения к PostgreSQL
-        dbname = 'postgres'
+        dbname = 'transport2'
         user = 'postgres'
         password = '12345'
         host = 'localhost'  # Или другой хост, на котором находится PostgreSQL

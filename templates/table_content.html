@@ -4,7 +4,7 @@
    <script src="/static/js/content.js"></script>
     <script>
 function hideContent(element) {
-  element.textContent = ''; // Устанавливаем текст содержимого ячейки пустым
+  element.textContent = '';
 }
 </script>
 {% endblock %}
@@ -22,7 +22,8 @@ function hideContent(element) {
         {% for info in infos %}
           <th style="border-bottom: 1px solid darkgrey">
             <input style="box-shadow: none; outline: none; border: 1px solid lightgrey; font-weight: normal" type="text" class="form-control column-filter" data-column="{{ loop.index0 }}" placeholder="Фильтр..."><br>
-            <a style="color: black;" href="./?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a>
+            <a style="color: black; " href="./?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a><br>
+          <span style="color: grey; font-weight: normal">({{ info[1] }})</span>
           </th>
         {% endfor %}
       </tr>
