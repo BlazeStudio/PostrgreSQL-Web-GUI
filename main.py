@@ -101,28 +101,58 @@ class PostgresTools():
     def table_sql(self, table):
         try:
             self.cursor.execute(
-                "SELECT pg_get_viewdef('%s'::regclass, true);" % table
+                "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = %s;",
+                (table,)
             )
-            sql = self.cursor.fetchone()[0]
-            return sql
+            columns_info = self.cursor.fetchall()
+
+            create_table_script = f"CREATE TABLE IF NOT EXISTS {table} (\n"
+            for column_info in columns_info:
+                column_name, data_type, is_nullable = column_info
+                create_table_script += f"    {column_name} {data_type}"
+                if is_nullable == 'NO':
+                    create_table_script += " NOT NULL"
+                create_table_script += ",\n"
+            create_table_script = create_table_script.rstrip(",\n") + "\n)"
+            create_table_script += "\nTABLESPACE pg_default;\n"
+            create_table_script += f"\nALTER TABLE IF EXISTS {table}\n    OWNER to postgres;\n"
+
+            return create_table_script
         except Exception as e:
-            print(f"Ошибка при получении SQL-запроса для таблицы: {e}")
+            print(f"Error getting SQL query for table: {e}")
             return None
 
-    def update_cell(self,sql, data):
-        self.cursor.execute(sql, data)
-        self.db.commit()
+    def update_cell(self, sql):
+        try:
+            self.cursor.execute(sql)
+            self.db.commit()
+        except Exception as e:
+            print(f"Ошибка при обновлении ячейки: {e}")
 
     def get_table_info(self, table):
         try:
             self.cursor.execute(
-                "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = %s;",
+                "SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = %s;",
                 (table,)
             )
             info = self.cursor.fetchall()
-            return info
+
+            # Retrieve primary key column names
+            self.cursor.execute(
+                "SELECT column_name FROM information_schema.key_column_usage WHERE table_name = %s AND constraint_name = (SELECT constraint_name FROM information_schema.table_constraints WHERE table_name = %s AND constraint_type = 'PRIMARY KEY');",
+                (table, table)
+            )
+            primary_key_columns = [row[0] for row in self.cursor.fetchall()]
+
+            # Add flag indicating whether each column is part of the primary key
+            updated_info = []
+            for col_info in info:
+                updated_col_info = col_info + (('YES',) if col_info[0] in primary_key_columns else ('NO',))
+                updated_info.append(updated_col_info)
+
+            return updated_info
         except Exception as e:
-            print(f"Ошибка при получении информации о столбцах таблицы: {e}")
+            print(f"Error getting table information: {e}")
             return None
 
     def get_foreign_keys(self, table):
@@ -162,70 +192,44 @@ class PostgresTools():
         self.cursor.execute(sql)
 
     def delete_column(self, table, column):
-        sql = self.cursor.execute('SELECT sql FROM sqlite_master WHERE tbl_name = ? AND type = ?',
-                                  [table, 'table']).fetchone()[0]
-        pattern = r"\((.*?)\)"
-        match = re.search(pattern, sql)
-        columns_string = match.group(1)
-        new_columns = [column.strip() for column in columns_string.split(',')]
-        if len(new_columns) == 0: return flash('Невозможно удалить последний столбец в таблице', 'danger')
-        new_columns2 = []
-        for cur in range(len(new_columns)): new_columns2.append(new_columns[cur].split(' ')[0])
-        index = new_columns2.index(column)
-        new_columns.pop(index)
+        try:
+            self.cursor.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                (table,)
+            )
+            existing_columns = [row[0] for row in self.cursor.fetchall()]
 
-        self.cursor.execute(f"PRAGMA table_info({table})")
-        columns_info = self.cursor.fetchall()
+            if column not in existing_columns:
+                flash('Столбец "%s" не существует в таблице' % column, 'danger')
+                return
 
-        # Создаем временную таблицу с новой структурой и данными из исходной таблицы
-        self.cursor.execute(f"CREATE TABLE temp_{table} ({', '.join(new_columns)})")
-        self.cursor.execute(
-            f"INSERT INTO temp_{table} SELECT {', '.join([col_info[1] for col_info in columns_info if col_info[1] != column])} FROM {table}")
+            sql = f'ALTER TABLE {table} DROP COLUMN {column}'
+            self.cursor.execute(sql)
 
-        # Удаляем исходную таблицу
-        self.cursor.execute(f"DROP TABLE {table}")
-
-        # Переименовываем временную таблицу обратно в исходное имя
-        self.cursor.execute(f"ALTER TABLE temp_{table} RENAME TO {table}")
-        self.db.commit()
-
-        return flash('Столбец "%s" был успешно удалён' % column, 'success')
+            flash('Столбец "%s" успешно удален из таблицы' % column, 'success')
+        except Exception as e:
+            print(f"Error deleting column: {e}")
+            flash('Произошла ошибка при удалении столбца: %s' % e, 'danger')
+        finally:
+            self.db.commit()
 
     def add_column(self, table, column, column_type2, not_null, atr):
-        self.cursor.execute(f"PRAGMA table_info({table})")
-        source_columns_info = self.cursor.fetchall()
-        if column == source_columns_info[-1][1]: return False
-        # self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
-        # count = self.cursor.fetchone()[0]
-        # if (count > 0) and ("AUTOINCREMENT" in column_type):
-        #     flash("AUTOINCREMENT не может быть применён, так как в таблице уже созданы строки", 'danger')
-        #     return False
-        if column and column_type2:
-            self.cursor.execute('ALTER TABLE %s ADD COLUMN %s %s %s' % (table, column, column_type2, not_null))
-            self.cursor.execute(f"SELECT COUNT(*) FROM {table}")
-            count = self.cursor.fetchone()[0]
-            sql = self.cursor.execute('SELECT sql FROM sqlite_master WHERE tbl_name = ? AND type = ?',
-                                      [table, 'table']).fetchone()[0]
-            pattern = r"\((.*?)\)"
-            match = re.search(pattern, sql)
-            columns_string = match.group(1)
-            new_columns = [column.strip() for column in columns_string.split(',')]
-            if 'UNIQUE' in atr:
-                for cur in range(len(new_columns)):
-                    if (new_columns[cur].split(' ')[0]) == column:
-                        time = new_columns[cur] + ' UNIQUE'
-                        new_columns[cur] = time
-            self.cursor.execute(f"PRAGMA table_info({table})")
-            source_columns_info = self.cursor.fetchall()
+        try:
+            self.cursor.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                (table,)
+            )
+            existing_columns = [row[0] for row in self.cursor.fetchall()]
 
-            self.cursor.execute(f"CREATE TABLE temp_{table} ({', '.join(new_columns)})")
-            self.cursor.execute(f"INSERT INTO temp_{table} SELECT {', '.join([col_info[1] for col_info in source_columns_info])} FROM {table}")
-            self.cursor.execute(f"DROP TABLE {table}")
-            self.cursor.execute(f"ALTER TABLE temp_{table} RENAME TO {table}")
+            if column in existing_columns:
+                return False
+            self.cursor.execute('ALTER TABLE %s ADD COLUMN %s %s %s' % (table, column, column_type2, not_null))
+
             self.db.commit()
 
             return True
-        else:
+        except Exception as e:
+            print(f"Error adding column: {e}")
             return False
 
     def add_row(self, table, values):
@@ -299,6 +303,7 @@ def index():
 @app.route('/<table>', methods=('GET', 'POST'))
 @require_database
 def table_info(table):
+    print(dataset.table_sql(table))
     return render_template(
         'table_structure.html',
         columns=dataset.get_table(table),
@@ -364,11 +369,16 @@ def add_column(table):
         autoincrement = 'AUTOINCREMENT' if request.form.get('autoincrement') else ''
         atr = unique + not_null + autoincrement
         if name and column_type:
-            success = dataset.add_column(table, name, column_type, not_null, atr)
-            if success:
-                flash('Столбец "%s" был успешно создан' % name, 'success')
+            dataset.cursor.execute("SELECT COUNT(*) FROM %s" % table)
+            row = dataset.cursor.fetchone()
+            if len(row) != 0 and not_null == 'NOT NULL':
+                flash('В таблице содержатся строчки, невозможно добавить столбец с атрибутом NOT NULL', 'danger')
             else:
-                flash('Столбец с таким именем уже существует', 'danger')
+                success = dataset.add_column(table, name, column_type, not_null, atr)
+                if success:
+                    flash('Столбец "%s" был успешно создан' % name, 'success')
+                else:
+                    flash('Столбец с таким именем уже существует', 'danger')
         else:
             flash('Имя и тип не могут быть пустыми', 'danger')
         return redirect(url_for('add_column', table=table))
@@ -387,12 +397,12 @@ def add_row(table):
 @app.route('/apply_changes', methods=['POST'])
 def apply_changes():
     table = request.form.get('table_name')
-    name = request.form.get('columnLabel')
+    name = request.form.get('columnLabel').strip()
     row = int(request.form.get('rowLabel'))
     new_value = request.form.get('newValue')
     try:
-        sql = f"UPDATE {table} SET {name} = ? WHERE rowid = ?"
-        dataset.update_cell(sql, (new_value, row))
+        sql = f"UPDATE {table} SET {name} = '{new_value}' WHERE id = {row}"
+        dataset.update_cell(sql)
 
         return jsonify({'message': 'Данные успешно обновлены в базе данных.'})
     except Exception as e:
@@ -433,22 +443,24 @@ def table_content(table):
 @require_database
 def table_query(table):
     row_count, error, data, data_description = None, None, None, None
+    cursor = dataset.db.cursor()
+
     if request.method == 'POST':
         sql = request.form.get('sql', '')
         try:
-            cur = dataset.cursor.execute(sql)
+            cursor.execute(sql)
             dataset.db.commit()
+            data = cursor.fetchall()[:app.config['MAX_RESULT_SIZE']]
+            data_description = cursor.description
+            row_count = len(data)
         except Exception as exc:
             error = str(exc)
-        else:
-            data = cur.fetchall()[:app.config['MAX_RESULT_SIZE']]
-            data_description = cur.description
-            row_count = cur.rowcount
+            if error == "no results to fetch": error = "Успешно!"
     else:
         if request.args.get('sql'):
             sql = request.args.get('sql')
         else:
-            sql = 'SELECT *\nFROM "%s"' % (table)
+            sql = f'SELECT * FROM "{table}"'
 
     return render_template(
         'table_query.html',
@@ -460,6 +472,9 @@ def table_query(table):
         error=error,
         table_sql=dataset.table_sql(table)
     )
+
+
+
 
 
 @app.route('/table_create/', methods=['POST'])

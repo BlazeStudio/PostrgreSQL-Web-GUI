@@ -7,7 +7,7 @@
     <select class="form-control" id="id_name" name="name">
       <option value="">Select column</option>
       {% for info in infos %}
-        <option {% if info[1] == name %}selected="selected" {% endif %}value="{{ info[1] }}">{{ info[1] }} ({{ info[2] }})</option>
+        <option {% if info[0] == name %}selected="selected" {% endif %}value="{{ info[0] }}">{{ info[0] }} ({{ info[1] }})</option>
       {% endfor %}
     </select>
   </div>

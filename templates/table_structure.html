@@ -20,7 +20,7 @@
       <tr>
         <th>Столбец</th>
         <th>Тип</th>
-        <th>NULL</th>
+        <th>NOT NULL</th>
         <th>PRIMARY KEY</th>
         <th>Действия</th>
       </tr>
@@ -31,19 +31,19 @@
           <td><code>{{ info[0] }}</code></td>
           <td><code>{{ info[1] }}</code></td>
           <td>
-            {% if not info[3] %}
+            {% if info[2] == 'NO' %}
               <span class="glyphicon glyphicon-ok"></span>
             {% endif %}
           </td>
           <td>
-            {% if info[5] %}
+            {% if info[4] == 'YES' %}
               <span class="glyphicon glyphicon-ok"></span>
             {% endif %}
           </td>
           <td>
-            <a style="color: #db7533" href="{{ url_for('rename_column',table=table,rename=info[1]) }}">Переименовать</a>
+            <a style="color: #db7533" href="{{ url_for('rename_column',table=table,rename=info[0]) }}">Переименовать</a>
             <span class="separator">|</span>
-            <a style="color: #db7533" href="{{ url_for('delete_column',table=table,name=info[1]) }}">Удалить</a>
+            <a style="color: #db7533" href="{{ url_for('delete_column',table=table,name=info[0]) }}">Удалить</a>
           </td>
         </tr>
       {% endfor %}

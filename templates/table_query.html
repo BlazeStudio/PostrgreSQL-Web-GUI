@@ -38,7 +38,6 @@
     {% if not data %}
       <p>Empty result set.</p>
     {% else %}
-      <a class="pull-right" href="{{ url_for('table_query', table=table, sql=sql) }}">Permalink</a>
       <h3>
         Результат ({{ data|length }})
       </h3>
