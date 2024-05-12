@@ -50,7 +50,6 @@
   color: #db7533;
 }
 
-
 .table-container{
   max-height: 1200px;
   border: 1px solid lightgrey;
@@ -60,3 +59,34 @@
   overflow-y: auto;
 }
 
+.form-control{
+  transition: box-shadow 0.5s;
+}
+
+.form-control:focus{
+  border: 1px solid darkgray;
+  box-shadow: 0 0 5px #db7533;
+}
+
+.orange{
+  color: white;
+  background: #db7533;
+  border: 1px solid #db7533;
+}
+
+.orange:visited{
+  color: white;
+  background: #db7533;
+  border: 1px solid #db7533;
+}
+
+.orange:focus{
+  background: #db7533;
+  border: 1px solid #db7533;
+}
+
+.orange:active{
+  color: white;
+  background: #db7533;
+  border: 1px solid #db7533;
+}

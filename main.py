@@ -205,6 +205,7 @@ class PostgresTools():
                 return
 
             sql = f'ALTER TABLE {table} DROP COLUMN {column}'
+            print(sql)
             self.cursor.execute(sql)
 
             flash('Столбец "%s" успешно удален из таблицы' % column, 'success')
@@ -233,6 +234,46 @@ class PostgresTools():
             print(f"Error adding column: {e}")
             return False
 
+    # def add_row(self, table, values):
+    #     #     try:
+    #     #         self.cursor.execute(
+    #     #             "SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = %s;",
+    #     #             (table,)
+    #     #         )
+    #     #         columns_info = self.cursor.fetchall()
+    #     #
+    #     #         column_names = [col_info[0] for col_info in columns_info]
+    #     #         non_nullable_columns = [col_info[0] for col_info in columns_info if col_info[1] == 'NO']
+    #     #
+    #     #         column_names_without_id = [col_name for col_name in column_names if col_name != 'id']
+    #     #
+    #     #         query = f"INSERT INTO {table} ("
+    #     #         query += ", ".join(column_names_without_id)
+    #     #         query += ") VALUES ("
+    #     #
+    #     #         placeholders = []
+    #     #         values_to_insert = []
+    #     #
+    #     #         for column_name in column_names_without_id:
+    #     #             if column_name in values:
+    #     #                 placeholders.append("%s")
+    #     #                 values_to_insert.append(values[column_name])
+    #     #             elif column_name in non_nullable_columns:
+    #     #                 placeholders.append("%s")
+    #     #                 values_to_insert.append(1)
+    #     #             else:
+    #     #                 placeholders.append("DEFAULT")
+    #     #
+    #     #         query += ", ".join(placeholders)
+    #     #         query += ")"
+    #     #
+    #     #         print(query)
+    #     #
+    #     #         self.cursor.execute(query, values_to_insert)
+    #     #         self.db.commit()
+    #     #     except Exception as e:
+    #     #         print(f"Ошибка при добавлении строки: {e}")
+
     def add_row(self, table, values):
         try:
             self.cursor.execute(
@@ -242,22 +283,19 @@ class PostgresTools():
             columns_info = self.cursor.fetchall()
 
             column_names = [col_info[0] for col_info in columns_info]
-            non_nullable_columns = [col_info[0] for col_info in columns_info if col_info[1] == 'NO']
-
-            column_names_without_id = [col_name for col_name in column_names if col_name != 'id']
 
             query = f"INSERT INTO {table} ("
-            query += ", ".join(column_names_without_id)
+            query += ", ".join(column_names)
             query += ") VALUES ("
 
             placeholders = []
             values_to_insert = []
 
-            for column_name in column_names_without_id:
+            for column_name in column_names:
                 if column_name in values:
                     placeholders.append("%s")
                     values_to_insert.append(values[column_name])
-                elif column_name in non_nullable_columns:
+                elif column_name in column_names:
                     placeholders.append("%s")
                     values_to_insert.append(1)
                 else:
@@ -265,6 +303,8 @@ class PostgresTools():
 
             query += ", ".join(placeholders)
             query += ")"
+
+            print(query)
 
             self.cursor.execute(query, values_to_insert)
             self.db.commit()
@@ -318,7 +358,6 @@ def index():
 @app.route('/<table>', methods=('GET', 'POST'))
 @require_database
 def table_info(table):
-    print(dataset.table_sql(table))
     return render_template(
         'table_structure.html',
         columns=dataset.get_table(table),
@@ -395,15 +434,19 @@ def add_column(table):
         return redirect(url_for('add_column', table=table))
     return render_template('add_column.html', column_mapping=column_mapping, table=table)
 
+
 @app.route('/<table>/<edit>/add-row/', methods=['GET', 'POST'])
 @require_database
 def add_row(table, edit):
-    values = dataset.get_table_info(table)
-    values_2 = []
-    for i in values:
-        values_2.append(i[0])
-    dataset.add_row(table, values)
+    if request.method == 'POST':
+        values = {}
+        for column_info in dataset.get_table_info(table):
+            column_name = column_info[0]
+            values[column_name] = None if request.form.get(column_name) == '' else request.form.get(column_name)
+        print(values)
+        dataset.add_row(table, values)
     return redirect(url_for('table_content', table=table, edit=edit))
+
 
 @app.route('/apply_changes', methods=['POST'])
 def apply_changes():
@@ -446,7 +489,6 @@ def delete_row(table, edit):
 def table_content(table, edit):
     columns_count = dataset.get_table(table)
     ordering = request.args.get('ordering')
-    print(ordering)
     rows_per_page = app.config['ROWS_PER_PAGE']
     page = request.args.get('page', 1, type=int)
     if ordering:
@@ -591,13 +633,12 @@ def _before_request():
     global dataset
     if database:
         # Параметры для подключения к PostgreSQL
-        dbname = 'transport2'
+        dbname = 'postgres'
         user = 'postgres'
         password = '12345'
         host = 'localhost'  # Или другой хост, на котором находится PostgreSQL
         port = 5432  # Порт PostgreSQL
-        # dataset = PostgresTools(dbname, user, password, host, port)
-        # dataset = PostgresTools(dbname, user, password, host, port)
+        dataset = PostgresTools(dbname, user, password, host, port)
 
 def main():
     global database

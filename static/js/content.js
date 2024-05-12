@@ -1,24 +1,9 @@
 $(function() {
-  // Фильтрация таблицы по значениям столбцов
-  $('.column-filter').on('input', function() {
-    var columnIndex = $(this).data('column');
-    var filterValue = $(this).val().toLowerCase();
-    $('table tbody tr').each(function() {
-      var cellValue = $(this).find('td').eq(columnIndex).text().toLowerCase();
-      if (cellValue.includes(filterValue)) {
-        $(this).show();
-      } else {
-        $(this).hide();
-      }
-    });
-  });
 
-  // Обработчик клика по ячейке для изменения ее значения
   $('table td').on('click', function() {
     $(this).attr('contenteditable', true).focus();
   });
 
-  // Обработчик события потери фокуса ячейкой, чтобы закончить редактирование
   $('table td').on('focusout', function() {
     $(this).removeAttr('contenteditable');
     // Получаем новое значение ячейки
@@ -29,7 +14,6 @@ $(function() {
     var columnLabel = $('thead th').eq(columnIndex).text();
     var rowLabel = $('tbody tr').eq(rowIndex).find('td').first().text();
     var table = $('#your_table').data('table');
-    // Отправляем AJAX запрос только если значение изменилось
     if ($(this).data('originalValue') !== newValue) {
       $.ajax({
         type: 'POST',
