@@ -298,8 +298,20 @@ def require_database(fn):
 def index():
     global database
     database = "<FileStorage: 'example.db' ('application/octet-stream')>"
-    if (not dataset):
-        return redirect(url_for('index'))
+    if not dataset:
+        if request.method == 'POST':
+            port = request.form.get('port')
+            if int(port) < 0:
+                flash(f'Ошибка при входе. Неверное значение порта', 'danger')
+                return render_template('index.html')
+            dbname = request.form.get('dbname')
+            user = request.form.get('username')
+            password = request.form.get('password')
+            host = request.form.get('host')
+            try:
+                join(dbname,user,password,host,port)
+            except Exception:
+                flash(f'Ошибка при входе. Проверьте правильность данных.', 'danger')
     return render_template('index.html')
 
 
@@ -570,6 +582,10 @@ def _general():
         'dataset': dataset,
     }
 
+def join(dbname, user, password, host, port):
+    global dataset
+    dataset = PostgresTools(dbname, user, password, host, port)
+
 @app.before_request
 def _before_request():
     global dataset
@@ -580,7 +596,8 @@ def _before_request():
         password = '12345'
         host = 'localhost'  # Или другой хост, на котором находится PostgreSQL
         port = 5432  # Порт PostgreSQL
-        dataset = PostgresTools(dbname, user, password, host, port)
+        # dataset = PostgresTools(dbname, user, password, host, port)
+        # dataset = PostgresTools(dbname, user, password, host, port)
 
 def main():
     global database

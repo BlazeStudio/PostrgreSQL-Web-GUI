@@ -1,6 +1,3 @@
-
-
-
 .btn{
   border: 1px solid darkgray;
 }
@@ -11,3 +8,55 @@
       color: #fff0f0;
       transition: 0.3s;
   }
+
+.form-sql{
+  font-weight: normal;
+  border: 2px solid #e59b6c;
+  padding: 10px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.normal-label{
+  font-weight: normal;
+  margin-top: 10px;
+}
+
+.input-tab{
+  margin-top: 5px;
+  width: 100%;
+  max-width: 200px;
+  height: 100%;
+  font-weight: normal;
+  border: 1px solid darkgray;
+  border-radius: 2px;
+  transition: box-shadow 0.5s;
+}
+
+.input-tab:focus {
+  outline: none;
+  border: 1px solid darkgray;
+  border-radius: 2px;
+  box-shadow: 0 0 5px #db7533;
+}
+
+.input-tab:focus::placeholder{
+  color: transparent;
+}
+
+.vxod{
+  font-size: 20px;
+  margin-top: 10px;
+  color: #db7533;
+}
+
+
+.table-container{
+  max-height: 1200px;
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  padding: 5px;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+

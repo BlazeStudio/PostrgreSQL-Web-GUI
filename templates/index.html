@@ -10,7 +10,22 @@
     <img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
     <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">{% if dataset %}{{ dataset.filename }}{% else %}SQL DATABASE BROWSER{% endif %}</b>
         <hr style="width: 400px">
-</div>
+        <div class="form-sql" style="font-size: 15px">
+        <form class="form" role="form" action="{{ url_for('index') }}" method="post">
+  <div class="form-group">
+      <div class="input-container">
+    <label class="vxod" for="inputfile">Вход</label><br>
+      <label class="normal-label">Хост<input class="input-tab" name="host" type="text" placeholder="localhost" value="localhost" required></label><br>
+      <label class="normal-label">Порт<input class="input-tab" name="port" type="number" placeholder="5432" value="5432" required></label><br>
+      <label class="normal-label">Имя пользователя<input class="input-tab" name="username" type="text" required></label><br>
+      <label class="normal-label">Пароль<input class="input-tab" name="password" type="password" required></label><br>
+      <label class="normal-label">Имя базы данных<input class="input-tab" name="dbname" type="text" required></label><br>
+      </div>
+  </div>
+  <button type="submit" class="btn">Открыть</button>
+</form>
+        </div>
+        </div>
     {% endif %}
 {% endblock %}
 {% block content %}
@@ -42,14 +57,6 @@
     </tbody>
   </table>
 {% else %}
-<form class="form" role="form" action="{{ url_for('index') }}" enctype="multipart/form-data" method="post">
-  <div class="form-group">
-    <label for="inputfile">Загрузите базу данных</label>
-    <input type="file" id="inputfile" name="sqlite-file">
-    <p class="help-block">Доступны только SQL базы данных.</p>
-  </div>
-  <button type="submit" class="btn">Открыть</button>
-</form>
 
 {% endif %}
 {% endblock %}

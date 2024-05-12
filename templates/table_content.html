@@ -25,13 +25,13 @@ function hideContent(element) {
     </a></p>
     <p style="margin-top: 10px; margin-left: 10px" class="pull-right"><a style="background: #db7533; border: 1px solid #db7533" id="add-row-button" class="btn btn-primary btn-sm" href="{{ url_for('add_row',table=table, edit=edit) }}">Добавить строку</a></p>
 <div class="table-responsive" style="margin-right: 30px">
-<div class="table-container" style="max-height: 1200px; border: 1px solid lightgrey; border-radius: 5px; overflow-x: auto; overflow-y: auto;">
+<div class="table-container">
   <table class="table table-striped" style="min-width: 50px;">
     <thead>
       <tr>
         {% for info in infos %}
           <th style="border-bottom: 1px solid darkgrey">
-            <input style="box-shadow: none; outline: none; border: 1px solid lightgrey; font-weight: normal" type="text" class="form-control column-filter" data-column="{{ loop.index0 }}" placeholder="Фильтр..."><br>
+            <input style="box-shadow: none; outline: none; border: 1px solid lightgrey; font-weight: normal; min-width: 50px" type="text" class="form-control column-filter" data-column="{{ loop.index0 }}" placeholder="Фильтр..."><br>
 {#                      <span style="color: grey; font-weight: normal">({{ info[1] }})</span>#}
               <a style="color: black; " href="./content?ordering={% if ordering == info[0] %}-{% endif %}{{ info[0] }}">{{ info[0] }}</a><br>
           </th>
