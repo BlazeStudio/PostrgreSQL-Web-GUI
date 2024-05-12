@@ -3,12 +3,12 @@
 {% block content_title %}
     {% if dataset %}
     <div style="margin-left: 10px">
-    <a style="text-decoration: none" href="{{ url_for('index') }}"><img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
-    <b style="font-family: 'Ebrima'; font-size: 32px; color: #db7533">{% if dataset %}{{ dataset.filename }}{% else %}SQL DATABASE BROWSER{% endif %}</b></a>
+    <a class="header" href="{{ url_for('index') }}"><img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
+    <b>{{ dataset.filename }}</b></a>
     {% else %}
     <div style="text-align: center">
     <img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
-    <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">{% if dataset %}{{ dataset.filename }}{% else %}SQL DATABASE BROWSER{% endif %}</b>
+    <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">SQL DATABASE BROWSER/b>
         <hr style="width: 400px">
         <div class="form-sql" style="font-size: 15px">
         <form class="form" role="form" action="{{ url_for('index') }}" method="post">

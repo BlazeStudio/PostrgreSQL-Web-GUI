@@ -30,15 +30,14 @@ function hideContent(element) {
   <form action="{{ url_for('add_row', table=table, edit=edit) }}" method="post" style="margin-top: 10px;">
     {% for info in infos %}
       <div class="form-group row">
-      {% if info[3] != 'now()' %}
-      {{ info }}
-        <label for="{{ info[0] }}" class="col-sm-2 col-form-label">{{ info[0] }}</label>
+{#      {% if info[3] != 'now()' %}#}
+          <label for="{{ info[0] }}" class="col-sm-2 col-form-label">{{ info[0] }} <i style="font-size: 12px; color: darkgrey">({{ info[1] }})</i></label>
         <div class="col-sm-10">
         {% if info[1] in ['integer', 'bigint', 'smallint', 'numeric', 'decimal', 'real', 'double precision'] %}
             <input type="number" step="any" class="form-control" id="{{ info[0] }}" name="{{ info[0] }}" {% if info[2] == 'NO' %}required{% endif %}>
         {% elif info[1] == 'date' %}
             <input type="date" class="form-control" id="{{ info[0] }}" name="{{ info[0] }}" min="0"{% if info[2] == 'NO' %}required{% endif %}>
-        {% elif info[1] == 'timestamp' %}
+        {% elif info[1] in ['timestamp', 'timestamp without time zone', 'datetime'] %}
             <input type="datetime-local" class="form-control" id="{{ info[0] }}" name="{{ info[0] }}"{% if info[2] == 'NO' %}required{% endif %}>
         {% elif info[1] == 'boolean' %}
             <select class="form-control" id="{{ info[0] }}" name="{{ info[0] }}">
@@ -49,7 +48,7 @@ function hideContent(element) {
             <input type="text" class="form-control" id="{{ info[0] }}" name="{{ info[0] }}"{% if info[2] == 'NO' %}required{% endif %}>
         {% endif %}
         </div>
-              {% endif %}
+{#              {% endif %}#}
       </div>
     {% endfor %}
     <div class="form-group row">

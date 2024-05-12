@@ -1,8 +1,8 @@
 {% extends "base_tables.html" %}
 
 {% block content_title %}<div style="font-family: 'Ebrima'; color: #db7533; margin-left: 10px">
-<img src="/static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
-  <a style="text-decoration: none; font-size: 32px; font-family: 'Ebrima'; color: #db7533" href="{{ url_for('index') }}"><b>{{ dataset.filename }}</b></a><span style="font-size: 30px"> - {{ table }}</span>
+<a class="header" href="{{ url_for('index') }}"><img src="/static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
+  <b>{{ dataset.filename }}</b></a><span style="font-size: 30px"> - {{ table }}</span>
 </div>
 {% endblock %}
 

@@ -31,7 +31,7 @@ else:
 DEBUG = True
 SECRET_KEY = 'sqlite-database-browser-0.1.0'
 MAX_RESULT_SIZE = 50
-ROWS_PER_PAGE = 20
+ROWS_PER_PAGE = 40
 OUT_FOLDER = 'export_file'
 
 app = Flask(__name__)
@@ -114,6 +114,37 @@ class PostgresTools():
                     create_table_script += " NOT NULL"
                 create_table_script += ",\n"
             create_table_script = create_table_script.rstrip(",\n") + "\n)"
+
+            # Fetch Primary Key constraint
+            self.cursor.execute(
+                "SELECT kcu.column_name FROM information_schema.table_constraints tc "
+                "JOIN information_schema.key_column_usage kcu "
+                "ON tc.constraint_name = kcu.constraint_name "
+                "WHERE tc.table_name = %s AND tc.constraint_type = 'PRIMARY KEY';",
+                (table,)
+            )
+            primary_key_columns = [row[0] for row in self.cursor.fetchall()]
+
+            if primary_key_columns:
+                create_table_script += f",\nPRIMARY KEY ({', '.join(primary_key_columns)})"
+
+            # Fetch Foreign Key constraints
+            self.cursor.execute(
+                "SELECT DISTINCT ccu.table_name AS foreign_table, ccu.column_name AS foreign_column "
+                "FROM information_schema.table_constraints AS tc "
+                "JOIN information_schema.key_column_usage AS kcu "
+                "ON tc.constraint_name = kcu.constraint_name "
+                "JOIN information_schema.constraint_column_usage AS ccu "
+                "ON ccu.constraint_name = tc.constraint_name "
+                "WHERE constraint_type = 'FOREIGN KEY' AND tc.table_name = %s;",
+                (table,)
+            )
+            foreign_keys = self.cursor.fetchall()
+
+            for foreign_key in foreign_keys:
+                foreign_table, foreign_column = foreign_key
+                create_table_script += f",\nFOREIGN KEY ({foreign_column}) REFERENCES {foreign_table} ({foreign_column})"
+
             create_table_script += "\nTABLESPACE pg_default;\n"
             create_table_script += f"\nALTER TABLE IF EXISTS {table}\n    OWNER to postgres;\n"
 
@@ -304,23 +335,10 @@ class PostgresTools():
             query += ", ".join(placeholders)
             query += ")"
 
-            print(query)
-
             self.cursor.execute(query, values_to_insert)
             self.db.commit()
         except Exception as e:
-            print(f"Ошибка при добавлении строки: {e}")
-
-    def rename_cloumn(self, table, rename, rename_to):
-        sql = self.cursor.execute('SELECT sql FROM sqlite_master WHERE tbl_name = ? AND type = ?',
-                                  [table, 'table']).fetchone()[0]
-        self.cursor.execute(
-            "ALTER TABLE %s RENAME TO old_%s" % (table, table))
-        r = '\\b' + rename + '\\b'
-        sql = re.sub(r, rename_to, sql)
-        self.cursor.execute(sql)
-        self.copy_table("old_%s" % table, table)
-        self.delete_table("old_%s" % table)
+            flash(f'{e}', 'danger')
 
 def require_database(fn):
     @wraps(fn)
@@ -373,13 +391,17 @@ def table_info(table):
 def rename_column(table):
     rename = request.args.get('rename')
     infos = dataset.get_table_info(table)
-    column_names = [row[1] for row in infos]
+    column_names = [row[0] for row in infos]  # Получаем имена столбцов
     if request.method == 'POST':
         new_name = request.form.get('rename_to', '')
         rename = request.form.get('rename', '')
         if new_name and new_name not in column_names:
-            dataset.rename_cloumn(table, rename, new_name)
-            flash('Столбец "%s" успешно переименован!' % rename, 'success')
+            try:
+                dataset.cursor.execute(f'ALTER TABLE {table} RENAME COLUMN {rename} TO {new_name}')
+                dataset.db.commit()
+                flash(f'Столбец "{rename}" успешно переименован в "{new_name}"!', 'success')
+            except Exception as e:
+                flash(f'Ошибка при переименовании столбца: {e}', 'danger')
         else:
             flash('Название столбца не должно быть пустым или совпадать с другим', 'danger')
         return redirect(url_for('rename_column', table=table))
@@ -389,6 +411,7 @@ def rename_column(table):
         table=table,
         rename=rename,
     )
+
 
 
 @app.route('/<table>/delete-column/', methods=['GET', 'POST'])
@@ -443,7 +466,6 @@ def add_row(table, edit):
         for column_info in dataset.get_table_info(table):
             column_name = column_info[0]
             values[column_name] = None if request.form.get(column_name) == '' else request.form.get(column_name)
-        print(values)
         dataset.add_row(table, values)
     return redirect(url_for('table_content', table=table, edit=edit))
 
@@ -632,13 +654,12 @@ def join(dbname, user, password, host, port):
 def _before_request():
     global dataset
     if database:
-        # Параметры для подключения к PostgreSQL
         dbname = 'postgres'
         user = 'postgres'
         password = '12345'
-        host = 'localhost'  # Или другой хост, на котором находится PostgreSQL
-        port = 5432  # Порт PostgreSQL
-        dataset = PostgresTools(dbname, user, password, host, port)
+        host = 'localhost'
+        port = 5432
+        # dataset = PostgresTools(dbname, user, password, host, port)
 
 def main():
     global database

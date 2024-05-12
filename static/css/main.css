@@ -90,3 +90,15 @@
   background: #db7533;
   border: 1px solid #db7533;
 }
+
+.header{
+  text-decoration: none;
+  font-size: 32px;
+  font-family: 'Leelawadee';
+  color: #db7533
+}
+
+.header:hover{
+  color: #db7533;
+  text-decoration: none;
+}
