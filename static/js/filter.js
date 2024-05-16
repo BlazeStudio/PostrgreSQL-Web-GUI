@@ -1,5 +1,4 @@
 $(function() {
-  // Фильтрация таблицы по значениям столбцов
   $('.column-filter').on('input', function() {
     var columnIndex = $(this).data('column');
     var filterValue = $(this).val().toLowerCase();

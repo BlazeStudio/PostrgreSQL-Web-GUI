@@ -3,7 +3,7 @@
 <h3>Удалить столбец</h3>
 <form action="{{ url_for('delete_column', table=table) }}" class="form" method="post">
   <div class="form-group">
-    <label for="id_name">Column name</label>
+    <label for="id_name">Имя столбца</label>
     <select class="form-control" id="id_name" name="name">
       <option value="">Select column</option>
       {% for info in infos %}
@@ -12,6 +12,6 @@
     </select>
   </div>
   <button class="btn btn-danger" type="submit">Удалить столбец</button>
-  <a class="btn btn-default" href="{{ url_for('table_info', table=table) }}">Cancel</a>
+  <a class="btn btn-default" href="{{ url_for('table_info', table=table) }}">Отмена</a>
 </form>
 {% endblock %}

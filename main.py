@@ -654,12 +654,12 @@ def join(dbname, user, password, host, port):
 def _before_request():
     global dataset
     if database:
-        dbname = 'postgres'
+        dbname = 'pharmacy'
         user = 'postgres'
         password = '12345'
         host = 'localhost'
         port = 5432
-        # dataset = PostgresTools(dbname, user, password, host, port)
+        dataset = PostgresTools(dbname, user, password, host, port)
 
 def main():
     global database

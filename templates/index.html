@@ -8,7 +8,7 @@
     {% else %}
     <div style="text-align: center">
     <img src="static/img/logo.png" width="45" height="45" style="margin-bottom: 10px">
-    <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">SQL DATABASE BROWSER/b>
+    <b style="font-family: 'Franklin Gothic Medium'; color: #db7533">SQL DATABASE BROWSER
         <hr style="width: 400px">
         <div class="form-sql" style="font-size: 15px">
         <form class="form" role="form" action="{{ url_for('index') }}" method="post">
@@ -25,6 +25,7 @@
   <button type="submit" class="btn">Открыть</button>
 </form>
         </div>
+    </b>
         </div>
     {% endif %}
 {% endblock %}
