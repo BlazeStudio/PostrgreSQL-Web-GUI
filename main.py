@@ -1,33 +1,17 @@
-import os
 import re
-import sqlite3
-import datetime
 from functools import wraps
 from markupsafe import Markup
 import psycopg2
-
-try:
-    from flask import (Flask, render_template, request, abort, session,
-                       flash, redirect, url_for, make_response, send_file, send_from_directory, jsonify)
-except ImportError:
-    raise RuntimeError('Unable to import flask module. Install by running '
-                       'pip install flask')
-try:
-    from pygments import formatters, highlight, lexers
-except ImportError:
-    import warnings
-    warnings.warn('pygments library not found.', ImportWarning)
-    syntax_highlight = lambda data: '<pre>%s</pre>' % data
-else:
-    def syntax_highlight(data):
-        if not data:
-            return ''
-        lexer = lexers.get_lexer_by_name('sql')
-        formatter = formatters.HtmlFormatter(linenos=False)
-        return highlight(data, lexer, formatter)
+from flask import (Flask, render_template, request, abort, flash, redirect, url_for, jsonify)
+from pygments import formatters, highlight, lexers
+def syntax_highlight(data):
+    if not data:
+        return ''
+    lexer = lexers.get_lexer_by_name('sql')
+    formatter = formatters.HtmlFormatter(linenos=False)
+    return highlight(data, lexer, formatter)
 
 
-# CUR_DIR = os.path.realpath(os.path.dirname(__file__))
 DEBUG = True
 SECRET_KEY = 'sqlite-database-browser-0.1.0'
 MAX_RESULT_SIZE = 50
