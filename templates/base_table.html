@@ -9,16 +9,16 @@
 {% block content %}
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="{% block structure_tab_class %}{% endblock %}">
-      <a style="color: #db7533" href="{{ url_for('table_info', table=table) }}">Структура</a>
+      <a style="color: #db7533" href="{{ url_for('table_info', table=table) }}">Structure</a>
     </li>
     <li role="presentation" class="{% block content_tab_class %}{% endblock %}">
-      <a style="color: #db7533" href="{{ url_for('table_content', table=table, edit='view') }}">Контент</a>
+      <a style="color: #db7533" href="{{ url_for('table_content', table=table, edit='view') }}">Content</a>
     </li>
     <li role="presentation" class="{% block query_tab_class %}{% endblock %}">
-      <a style="color: #db7533" href="{{ url_for('table_query', table=table) }}">Запрос</a>
+      <a style="color: #db7533" href="{{ url_for('table_query', table=table) }}">Query</a>
     </li>
     <li role="presentation" class="pull-right{% block drop_tab_class %}{% endblock %}">
-      <a style="color: red" href="{{ url_for('delete_table', table=table) }}">Удалить</a>
+      <a style="color: red" href="{{ url_for('delete_table', table=table) }}">Delete</a>
     </li>
     {% block inner_nav %}{% endblock %}
   </ul>

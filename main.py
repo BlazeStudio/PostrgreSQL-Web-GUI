@@ -62,7 +62,7 @@ class PostgresTools():
             self.cursor.execute('SELECT * FROM %s;' % table)
             return self.cursor.fetchall()
         except Exception as e:
-            print(f"Ошибка при выполнении запроса: {e}")
+            print(f"Error updating the cell: {e}")
             return None
 
     def table_sql(self, table):
@@ -125,7 +125,7 @@ class PostgresTools():
             self.cursor.execute(sql)
             self.db.commit()
         except Exception as e:
-            print(f"Ошибка при обновлении ячейки: {e}")
+            print(f"Error updating the cell: {e}")
 
     def get_table_info(self, table):
         try:
@@ -171,7 +171,7 @@ class PostgresTools():
             table_page = self.cursor.fetchall()
             return table_page
         except Exception as e:
-            print(f"Ошибка при выполнении запроса paginate: {e}")
+            print(f"Error when executing the paginate request: {e}")
             return None
 
 
@@ -198,17 +198,17 @@ class PostgresTools():
             existing_columns = [row[0] for row in self.cursor.fetchall()]
 
             if column not in existing_columns:
-                flash('Столбец "%s" не существует в таблице' % column, 'danger')
+                flash('The column "%s" does not exist in the table' % column, 'danger')
                 return
 
             sql = f'ALTER TABLE {table} DROP COLUMN {column}'
             print(sql)
             self.cursor.execute(sql)
 
-            flash('Столбец "%s" успешно удален из таблицы' % column, 'success')
+            flash('Column "%s" has been successfully deleted from the table' % column, 'success')
         except Exception as e:
             print(f"Error deleting column: {e}")
-            flash('Произошла ошибка при удалении столбца: %s' % e, 'danger')
+            flash('An error occurred when deleting a column: %s' % e, 'danger')
         finally:
             self.db.commit()
 
@@ -286,7 +286,7 @@ def index():
         if request.method == 'POST':
             port = request.form.get('port')
             if int(port) < 0:
-                flash(f'Ошибка при входе. Неверное значение порта', 'danger')
+                flash(f'Error logging in. Invalid port value', 'danger')
                 return render_template('index.html')
             dbname = request.form.get('dbname')
             user = request.form.get('username')
@@ -295,7 +295,7 @@ def index():
             try:
                 join(dbname,user,password,host,port)
             except Exception:
-                flash(f'Ошибка при входе. Проверьте правильность данных.', 'danger')
+                flash(f'Error logging in. Check that the data is correct.', 'danger')
     return render_template('index.html')
 
 
@@ -317,7 +317,7 @@ def table_info(table):
 def rename_column(table):
     rename = request.args.get('rename')
     infos = dataset.get_table_info(table)
-    column_names = [row[0] for row in infos]  # Получаем имена столбцов
+    column_names = [row[0] for row in infos]
     if request.method == 'POST':
         new_name = request.form.get('rename_to', '')
         rename = request.form.get('rename', '')
@@ -325,11 +325,11 @@ def rename_column(table):
             try:
                 dataset.cursor.execute(f'ALTER TABLE {table} RENAME COLUMN {rename} TO {new_name}')
                 dataset.db.commit()
-                flash(f'Столбец "{rename}" успешно переименован в "{new_name}"!', 'success')
+                flash(f'The column "{rename}" has been successfully renamed to "{new_name}"!', 'success')
             except Exception as e:
-                flash(f'Ошибка при переименовании столбца: {e}', 'danger')
+                flash(f'Error when renaming a column: {e}', 'danger')
         else:
-            flash('Название столбца не должно быть пустым или совпадать с другим', 'danger')
+            flash('The column name must not be empty or match another one', 'danger')
         return redirect(url_for('rename_column', table=table))
     return render_template(
         'rename_column.html',
@@ -347,7 +347,7 @@ def delete_column(table):
     infos = dataset.get_table_info(table)
     if request.method == 'POST':
         name = request.form.get('name', '')
-        if (name == None): flash('Столбец не указан', 'danger')
+        if (name == None): flash('The column is not specified', 'danger')
         else:
             dataset.delete_column(table, name)
         return redirect(url_for('table_info', table=table))
@@ -374,12 +374,12 @@ def add_column(table):
         if name and column_type:
             success = dataset.add_column(table, name, column_type, not_null, atr)
             if success:
-                flash('Столбец "%s" был успешно создан' % name, 'success')
+                flash('Column "%s" was successfully created' % name, 'success')
             else:
-                if not_null == 'NOT NULL': flash('В таблице содержатся строчки, невозможно добавить столбец с атрибутом NOT NULL', 'danger')
-                else: flash('Столбец с таким именем уже существует', 'danger')
+                if not_null == 'NOT NULL': flash('The table contains rows, it is impossible to add a column with the NOT NULL attribute', 'danger')
+                else: flash('A column with the same name already exists', 'danger')
         else:
-            flash('Имя и тип не могут быть пустыми', 'danger')
+            flash('The name and type cannot be empty', 'danger')
         return redirect(url_for('add_column', table=table))
     return render_template('add_column.html', column_mapping=column_mapping, table=table)
 
@@ -406,7 +406,7 @@ def apply_changes():
         sql = f"UPDATE {table} SET {name} = '{new_value}' WHERE id = {row}"
         dataset.update_cell(sql)
 
-        return jsonify({'message': 'Данные успешно обновлены в базе данных.'})
+        return jsonify({'message': 'The data has been successfully updated in the database.'})
     except Exception as e:
         return jsonify({'error': str(e)})
 
@@ -426,9 +426,9 @@ def delete_row(table, edit):
         sql = sql[:-5]
         dataset.cursor.execute(sql)
         dataset.db.commit()
-        flash('Строка успешно удалена.', 'success')
+        flash('The row was successfully deleted.', 'success')
     except Exception as e:
-        flash(f'Ошибка при удалении строки: {e}', 'danger')
+        flash(f'Error deleting a row: {e}', 'danger')
     return redirect(url_for('table_content', table=table, edit=edit))
 
 
@@ -480,7 +480,7 @@ def table_query(table):
             row_count = len(data)
         except Exception as exc:
             error = str(exc)
-            if error == "no results to fetch": error = "Успешно!"
+            if error == "no results to fetch": error = "Success!"
     else:
         if request.args.get('sql'):
             sql = request.args.get('sql')
@@ -504,14 +504,14 @@ def table_query(table):
 def table_create():
     table = request.form.get('table_name', '')
     if not table:
-        flash('Введите имя таблицы.', 'danger')
+        flash('Enter the name of the table.', 'danger')
         return redirect(request.referrer)
     try:
         dataset.cursor.execute(f'CREATE TABLE {table}(id SERIAL PRIMARY KEY)')
         dataset.db.commit()
         return redirect(url_for('table_info', table=table))
     except Exception as e:
-        flash(f'Ошибка при создании таблицы: {str(e)}', 'danger')
+        flash(f'Error creating the table: {str(e)}', 'danger')
         return redirect(request.referrer)
 
 
@@ -523,9 +523,9 @@ def delete_table(table):
             dataset.cursor.execute('DROP TABLE %s' % table)
             dataset.db.commit()
         except Exception as exc:
-            flash('Ошибка при удалении таблицы: %s' % exc, 'danger')
+            flash('Error deleting the table: %s' % exc, 'danger')
         else:
-            flash('Таблица "%s" была успешно удалена.' % table, 'success')
+            flash('The table "%s" was successfully deleted.' % table, 'success')
             return redirect(url_for('index'))
     return render_template('delete_table.html', table=table)
 
@@ -576,17 +576,17 @@ def join(dbname, user, password, host, port):
     global dataset
     dataset = PostgresTools(dbname, user, password, host, port)
 
-@app.before_request
-def _before_request():
-    global dataset
-    if database:
-        #Change values for your postgresql database
-        dbname = 'Hotel'
-        user = 'postgres'
-        password = '12345'
-        host = 'localhost'
-        port = 5432
-        dataset = PostgresTools(dbname, user, password, host, port)
+# @app.before_request
+# def _before_request():
+#     global dataset
+#     if database:
+#         #Change values for your postgresql database(FOR TEST)
+#         # dbname = 'Hotel'
+#         # user = 'postgres'
+#         # password = '12345'
+#         # host = 'localhost'
+#         # port = 5432
+#         # dataset = PostgresTools(dbname, user, password, host, port)
 
 def main():
     global database
