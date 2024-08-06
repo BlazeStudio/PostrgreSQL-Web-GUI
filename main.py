@@ -13,10 +13,8 @@ def syntax_highlight(data):
 
 
 DEBUG = True
-SECRET_KEY = 'sqlite-database-browser-0.1.0'
 MAX_RESULT_SIZE = 50
 ROWS_PER_PAGE = 40
-OUT_FOLDER = 'export_file'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -47,21 +45,6 @@ class PostgresTools():
     def size(self):
         self.cursor.execute("SELECT pg_size_pretty(pg_database_size(current_database()))")
         return self.cursor.fetchone()[0]
-
-    # @property
-    # def created(self):
-    #     self.cursor.execute("SELECT pg_stat_file('base/{0}/PG_VERSION')".format(self.dbname))
-    #     pg_version_mtime = self.cursor.fetchone()[0]
-    #     return datetime.datetime.fromtimestamp(pg_version_mtime)
-
-    # @property
-    # def modified(self):
-    #     # Для PostgreSQL нет прямого способа получить время последнего изменения базы данных.
-    #     # Мы можем использовать время последнего изменения файлов базы данных.
-    #     # Например, мы можем использовать время последнего изменения файла PG_VERSION.
-    #     self.cursor.execute("SELECT pg_stat_file('base/{0}/PG_VERSION')".format(self.dbname))
-    #     pg_version_mtime = self.cursor.fetchone()[0]
-    #     return datetime.datetime.fromtimestamp(pg_version_mtime)
 
     @property
     def tables(self):
@@ -159,7 +142,6 @@ class PostgresTools():
             )
             primary_key_columns = [row[0] for row in self.cursor.fetchall()]
 
-            # Add flag indicating whether each column is part of the primary key
             updated_info = []
             for col_info in info:
                 updated_col_info = col_info + (('YES',) if col_info[0] in primary_key_columns else ('NO',))
@@ -248,46 +230,6 @@ class PostgresTools():
         except Exception as e:
             print(f"Error adding column: {e}")
             return False
-
-    # def add_row(self, table, values):
-    #     #     try:
-    #     #         self.cursor.execute(
-    #     #             "SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = %s;",
-    #     #             (table,)
-    #     #         )
-    #     #         columns_info = self.cursor.fetchall()
-    #     #
-    #     #         column_names = [col_info[0] for col_info in columns_info]
-    #     #         non_nullable_columns = [col_info[0] for col_info in columns_info if col_info[1] == 'NO']
-    #     #
-    #     #         column_names_without_id = [col_name for col_name in column_names if col_name != 'id']
-    #     #
-    #     #         query = f"INSERT INTO {table} ("
-    #     #         query += ", ".join(column_names_without_id)
-    #     #         query += ") VALUES ("
-    #     #
-    #     #         placeholders = []
-    #     #         values_to_insert = []
-    #     #
-    #     #         for column_name in column_names_without_id:
-    #     #             if column_name in values:
-    #     #                 placeholders.append("%s")
-    #     #                 values_to_insert.append(values[column_name])
-    #     #             elif column_name in non_nullable_columns:
-    #     #                 placeholders.append("%s")
-    #     #                 values_to_insert.append(1)
-    #     #             else:
-    #     #                 placeholders.append("DEFAULT")
-    #     #
-    #     #         query += ", ".join(placeholders)
-    #     #         query += ")"
-    #     #
-    #     #         print(query)
-    #     #
-    #     #         self.cursor.execute(query, values_to_insert)
-    #     #         self.db.commit()
-    #     #     except Exception as e:
-    #     #         print(f"Ошибка при добавлении строки: {e}")
 
     def add_row(self, table, values):
         try:
@@ -638,7 +580,8 @@ def join(dbname, user, password, host, port):
 def _before_request():
     global dataset
     if database:
-        dbname = 'pharmacy'
+        #Change values for your postgresql database
+        dbname = 'Hotel'
         user = 'postgres'
         password = '12345'
         host = 'localhost'
